@@ -1,0 +1,31 @@
+---
+- name: Initialize Kubernetes Master Node
+  hosts: masters
+  become: yes
+  tasks:
+    - name: Ensure Kubernetes packages are installed
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+      when: ansible_os_family == "Debian"
+
+    - name: Initialize the Kubernetes cluster
+      command: kubeadm init --pod-network-cidr=10.244.0.0/16
+      register: init_output
+      changed_when: "'initialized' not in init_output.stdout"
+      tags: initialize_cluster
+
+    - name: Create .kube directory and copy admin.conf to local kubeconfig
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/{{ ansible_user }}/.kube/config
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: 0600
+      tags: configure_kubeconfig
