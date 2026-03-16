@@ -1,0 +1,24 @@
+---
+- name: Modify Kubernetes nodes labels and taints
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - name: Add or modify node labels and taints
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Node
+          metadata:
+            name: "{{ item }}"
+            labels:
+              env: production
+              role: worker
+          spec:
+            taints:
+            - effect: NoSchedule
+              key: dedicated
+              value: worker-pool
+      loop: "{{ groups['kube_node'] }}"
