@@ -1,0 +1,17 @@
+- hosts: kube-nodes
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install kubeadm, kubelet and kubectl
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - kubeadm={{ kubeadm_version }}
+        - kubelet={{ kubelet_version }}
+        - kubectl={{ kubectl_version }}
+      when: ansible_os_family == "Debian"
